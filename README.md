@@ -27,7 +27,8 @@ Example of Cloudfigure.json:
             {'Name': 'SomePassword', 'Location': 'SomeOutputName', 'Unencrypt': true},
             {'Name': 'SomeChildValue', 'Location': 'SomeChildStack.SomeOutputName'},
             {'Name': 'SomeChildPassword', 'Location': 'SomeChildStack.SomeOutputName', 'Unencrypt': true}      
-    ]
+    ],
+    'SubstituteInto': './SomePath.txt'
 } 
 ```
 
