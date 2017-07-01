@@ -5,12 +5,12 @@ from unittest import mock
 class JsonParsingTests(unittest.TestCase):
     def test_that_valid_json_parses(self):
         config = """{
-    'Configuration': [
-            {'Name': 'SomeAddress', 'Location': 'SomeEndpoint'},
-            {'Name': 'SomePassword', 'Location': 'SomeOutputName', 'Unencrypt': true}
+    "Configuration": [
+            {"Name": "SomeAddress",  "Location": "SomeEndpoint"},
+            {"Name": "SomePassword", "Location": "SomeOutputName", "Unencrypt": true}
     ],
-    'SubstituteInto': [
-        './SomePath.txt'
+    "SubstituteInto": [
+        "./SomePath.txt"
     ]
 }"""
 
@@ -29,5 +29,5 @@ class JsonParsingTests(unittest.TestCase):
         self.assertEqual(result.substitute_into[0], "./SomePath.txt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

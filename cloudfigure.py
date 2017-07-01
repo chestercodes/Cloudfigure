@@ -30,7 +30,23 @@ class CloudfigureFile:
         self.substitute_into.append(substitute_into)
 
 def parse_cloudfigure_file(config_json):
-    return CloudfigureFile()
+    config = CloudfigureFile()
+    json_obj = json.loads(config_json)
+
+    for config_value in json_obj['Configuration']:
+        name = config_value["Name"]
+        location = config_value["Location"]
+        if "Unencrypt" in config_value:
+            unencrypt = config_value["Unencrypt"]
+        else:
+            unencrypt = False
+        config_val = ConfigValue(name, location, unencrypt)
+        config.add_config_value(config_val)
+
+    for substitute_into in json_obj['SubstituteInto']:
+        config.add_substitute_into(substitute_into)
+
+    return config 
 
 def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
