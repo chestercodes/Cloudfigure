@@ -16,17 +16,27 @@ class JsonParsingTests(unittest.TestCase):
 
         result = cloudfigure.parse_cloudfigure_file(config)
 
-        self.assertEqual(len(result.configuration), 2)
-        self.assertEqual(result.configuration[0].name, "SomeAddress")
-        self.assertEqual(result.configuration[0].location, "SomeEndpoint")
-        self.assertEqual(result.configuration[0].unencrypt, False)
+        self.assertTrue(result[0])
+        config = result[1]
+        self.assertEqual(len(config.configuration), 2)
+        self.assertEqual(config.configuration[0].name, "SomeAddress")
+        self.assertEqual(config.configuration[0].location, "SomeEndpoint")
+        self.assertEqual(config.configuration[0].unencrypt, False)
 
-        self.assertEqual(result.configuration[1].name, "SomePassword")
-        self.assertEqual(result.configuration[1].location, "SomeOutputName")
-        self.assertEqual(result.configuration[1].unencrypt, True)
+        self.assertEqual(config.configuration[1].name, "SomePassword")
+        self.assertEqual(config.configuration[1].location, "SomeOutputName")
+        self.assertEqual(config.configuration[1].unencrypt, True)
 
-        self.assertEqual(len(result.substitute_into), 1)
-        self.assertEqual(result.substitute_into[0], "./SomePath.txt")
+        self.assertEqual(len(config.substitute_into), 1)
+        self.assertEqual(config.substitute_into[0], "./SomePath.txt")
+
+    def test_that_junk_json_doesnt_throw_and_returns_false_and_None(self):
+        config = """dfiwu9e7b3rc08n8b9sc__+$F£9"""
+
+        result = cloudfigure.parse_cloudfigure_file(config)
+
+        self.assertFalse(result[0])
+        self.assertEqual(result[1], None)
 
 
 if __name__ == "__main__":
