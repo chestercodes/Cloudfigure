@@ -29,6 +29,9 @@ class CloudfigureFile:
     def add_substitute_into(self, substitute_into):
         self.substitute_into.append(substitute_into)
 
+def parse_cloudfigure_file(config_json):
+    return CloudfigureFile()
+
 def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
     if assume_role is not None:
