@@ -1,0 +1,13 @@
+{
+    "Stacks": [
+        {
+            "StackId": "ChildStackId",
+            "Outputs": [
+                {
+                    "OutputKey": "ChildStackOutput1",
+                    "OutputValue": "ChildStackOutput1Value"
+                }
+            ]
+        }
+    ]
+}
