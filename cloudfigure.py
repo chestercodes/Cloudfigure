@@ -14,9 +14,25 @@ def read_all_text(path):
         data = myfile.read().replace('\n', '')
     return data
 
+class ConfigValue:
+    def __init__(self, name, location, unencrypt):
+        self.name = name
+        self.location = location
+        self.unencrypt = unencrypt
+
+class CloudfigureFile:
+    def __init__(self):
+        self.configuration = []
+        self.substitute_into = []
+    def add_config_value(self, config_value):
+        self.configuration.append(config_value)
+    def add_substitute_into(self, substitute_into):
+        self.substitute_into.append(substitute_into)
+
 def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
-    if assume_role != None:
+    if assume_role is not None:
+        print("Assume IAM role - " + assume_role)
         sts = boto.client('sts')
         try:
             sts_role = sts.assume_role(RoleArn=assume_role, RoleSessionName="Cloudfigure")
@@ -24,6 +40,7 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbo
             print("Error - failed to assume role")
             print(e)
             sys.exit(1)
+        print("Assumed role")
 
     kms = boto.client('kms')
     cfn = boto.client('cloudformation')
@@ -48,7 +65,7 @@ def run_cloudfigure_script(boto, args):
 
     if len(args.stack_ids) < 1:
         print("No stack ids specified in call, try look for them in file")
-        if args.stack_ids_in_file == None:
+        if args.stack_ids_in_file is None:
             print("Error - please provide at least 1 stack id or specify file location")
             sys.exit(1)
         else:
