@@ -4,16 +4,16 @@
             "StackId": "ParentStack",
             "Outputs": [
                 {
-                    "OutputKey": "ParentStackOutput1",
-                    "OutputValue": "ParentStackOutput1Value"
+                    "OutputKey": "SomeEndpoint",
+                    "OutputValue": "SomeAddressValue"
                 },
                 {
-                    "OutputKey": "ChildStackLogicalId",
-                    "OutputValue": "ChildStackStackId"
+                    "OutputKey": "SomeOutputName",
+                    "OutputValue": "U29tZVBhc3N3b3JkVmFsdWVFbmNyeXB0ZWQ="
                 },
                 {
-                    "OutputKey": "ParentStackOutput2",
-                    "OutputValue": "ParentStackOutput2Value"
+                    "OutputKey": "SomeChildStack",
+                    "OutputValue": "ChildStackId"
                 }
             ]
         }

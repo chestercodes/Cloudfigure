@@ -28,24 +28,52 @@ class MockKms:
             raise Exception("Doesnt exist")
         return self.calls[CiphertextBlob]
 
-class IntegrationTest:
-    def __init__(self, directory_path):
-        self.cfn = MockCfn(directory_path)
-        self.kms = MockKms(directory_path)
-        self.expected = cf.read_all_text(os.path.join(directory_path, "Expected"))
-        stack_ids_text = cf.read_all_text(os.path.join(directory_path, "StackIds.json"))
-        self.stack_ids = json.loads(stack_ids_text)
-        config_path = os.path.join(directory_path, "Cloudfigure.json")
-        self.cloudfigure_config = cf.read_all_text(config_path)
-    
-    def mock_client(self, service):
+class MockBoto:
+    def __init__(self, kms, cfn):
+        self.kms = kms
+        self.cfn = cfn
+
+    def client(self, service):
         if service == "cloudformation":
             return self.cfn
         if service == "kms":
             return self.kms
         raise Exception("shouldn't be asking for this")
 
+class IntegrationTest(unittest.TestCase):
+    def __init__(self, directory_path):
+        self.cfn = MockCfn(directory_path)
+        self.kms = MockKms(directory_path)
+        stack_ids_text = cf.read_all_text(os.path.join(directory_path, "StackIds.json"))
+        self.stack_ids = json.loads(stack_ids_text)
+        config_path = os.path.join(directory_path, "Cloudfigure.json")
+        self.cloudfigure_config = cf.read_all_text(config_path)
+
+        # assert against substituted files
+        expected_files = {}
+        expected_files_in_dir = [f for f in listdir(directory_path) if f.startswith("ExpectedFile_")]
+        for file_name in expected_files_in_dir:
+            name = file_name[len("ExpectedFile_"):]
+            path = join(directory_path, name)
+            expected_files[path] = cf.read_all_text(join(directory_path, name))
+        self.expected_files = expected_files
+
+        self.writes = {}
+        cf.write_all_text = self.mock_write_all_text
+
+    def mock_write_all_text(self, path, content):
+        self.writes[path] = content
+
     def run(self):
-        self.result = cf.run_cloudfigure({"client": self.mock_client}, self.cloudfigure_config, self.stack_ids)
+        self.result = cf.run_cloudfigure(MockBoto(self.kms, self.cfn), self.cloudfigure_config, self.stack_ids)
         return self.result
+
+    def assert_expected_files(self):
+        for expected_write in self.expected_files.keys():
+            if expected_write not in self.writes:
+                self.assertFalse(True, "file was written to which was not expected " - expected_write)
+            actual = self.writes[expected_write]
+            expected = self.expected_files[expected_write]
+            self.assertEqual(actual, expected)
+
 

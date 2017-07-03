@@ -1,11 +1,11 @@
 ﻿{
-    'Configuration': [      
-            {'Name': 'SomeAddress', 'Location': 'SomeEndpoint'},
-            {'Name': 'SomePassword', 'Location': 'SomeOutputName', 'Unencrypt': true},
-            {'Name': 'SomeChildValue', 'Location': 'SomeChildStack.SomeOutputName'},
-            {'Name': 'SomeChildPassword', 'Location': 'SomeChildStack.SomeOutputName', 'Unencrypt': true}      
+    "Configuration": [      
+            {"Name": "SomeAddress", "Location": "SomeEndpoint"},
+            {"Name": "SomePassword", "Location": "SomeOutputName", "Unencrypt": true},
+            {"Name": "SomeChildValue", "Location": "SomeChildStack.SomeOutputName"},
+            {"Name": "SomeChildPassword", "Location": "SomeChildStack.SomeOutputName", "Unencrypt": true}      
     ],
-    'SubstituteInto': [
-        './SomePath.txt'
+    "SubstituteInto": [
+        "./SomePath.txt"
     ]
 }

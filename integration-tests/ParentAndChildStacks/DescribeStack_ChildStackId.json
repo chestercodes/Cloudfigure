@@ -4,8 +4,12 @@
             "StackId": "ChildStackId",
             "Outputs": [
                 {
-                    "OutputKey": "ChildStackOutput1",
-                    "OutputValue": "ChildStackOutput1Value"
+                    "OutputKey": "SomeChildOutput",
+                    "OutputValue": "SomeChildOutputValue"
+                },
+                {
+                    "OutputKey": "SomeChildPassword",
+                    "OutputValue": "U29tZUNoaWxkUGFzc3dvcmRWYWx1ZUVuY3J5cHRlZA=="
                 }
             ]
         }

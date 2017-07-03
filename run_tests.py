@@ -16,6 +16,8 @@ import unittest
 
 # import the test modules
 from tests import JsonParsingTests
+from tests import IntegrationTest
+from tests import IntegrationTests
 
 if __name__ == '__main__':
     #if is_running_under_teamcity():
@@ -25,5 +27,5 @@ if __name__ == '__main__':
 
     # add modules to suite
     suite = unittest.defaultTestLoader.loadTestsFromModule(JsonParsingTests)
-    #suite.addTests( unittest.defaultTestLoader.loadTestsFromModule(todo))
+    suite.addTests( unittest.defaultTestLoader.loadTestsFromModule(IntegrationTests))
     runner.run(suite)

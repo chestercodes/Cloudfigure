@@ -14,6 +14,9 @@ def read_all_text(path):
         data = myfile.read().replace('\n', '')
     return data
 
+def write_all_text(path, content):
+    pass
+
 class ConfigValue:
     def __init__(self, name, location, unencrypt):
         self.name = name
@@ -75,7 +78,7 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbo
     kms = boto.client('kms')
     cfn = boto.client('cloudformation')
     
-    
+    write_all_text("some-path", "some-content")
 
 
 def run_cloudfigure_script(boto, args):

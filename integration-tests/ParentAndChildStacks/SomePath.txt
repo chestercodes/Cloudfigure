@@ -1,0 +1,4 @@
+SomeAddress is #{SomeAddress}
+SomePassword is #{SomePassword}
+SomeChildValue is #{SomeChildValue}
+SomeChildPassword is #{SomeChildPassword}

@@ -1,13 +1,11 @@
 {
-    "Stacks": [
-        {
-            "StackId": "ChildStackId",
-            "Outputs": [
-                {
-                    "OutputKey": "ChildStackOutput1",
-                    "OutputValue": "ChildStackOutput1Value"
-                }
-            ]
-        }
+    "Configuration": [      
+            {"Name": "SomeAddress", "Location": "SomeEndpoint"},
+            {"Name": "SomePassword", "Location": "SomeOutputName", "Unencrypt": true},
+            {"Name": "SomeChildValue", "Location": "SomeChildStack.SomeChildOutput"},
+            {"Name": "SomeChildPassword", "Location": "SomeChildStack.SomeChildPassword", "Unencrypt": true}      
+    ],
+    "SubstituteInto": [
+        "./SomePath.txt"
     ]
 }
