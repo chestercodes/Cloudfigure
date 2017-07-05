@@ -61,23 +61,45 @@ def parse_cloudfigure_file(config_json):
         print("Error - Failed read cloudfigure json file")
         return (False, None)
 
+def get_outputs_from_stack_id(cfn, stack_id):
+    response = cfn.describe_stacks(StackName=stack_id)
+    stack = response["Stacks"][0]
+    pause = 0
 
 def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
+    sts_role_or_none = None
     if assume_role is not None:
+        if verbose: print("Try to assume role - " + assume_role)
         print("Assume IAM role - " + assume_role)
         sts = boto.client('sts')
         try:
-            sts_role = sts.assume_role(RoleArn=assume_role, RoleSessionName="Cloudfigure")
+            sts_role_or_none = sts.assume_role(RoleArn=assume_role, RoleSessionName="Cloudfigure")
         except Exception as e:
             print("Error - failed to assume role")
             print(e)
             sys.exit(1)
         print("Assumed role")
 
-    kms = boto.client('kms')
-    cfn = boto.client('cloudformation')
-    
+    if sts_role_or_none is None:
+        kms = boto.client('kms')
+        cfn = boto.client('cloudformation')
+    else:
+        credentials = sts_role_or_none['Credentials']
+        kms = boto.client('kms',
+            aws_access_key_id = credentials['AccessKeyId'],
+            aws_secret_access_key = credentials['SecretAccessKey'],
+            aws_session_token = credentials['SessionToken'])
+        cfn = boto.client('cloudformation',
+            aws_access_key_id = credentials['AccessKeyId'],
+            aws_secret_access_key = credentials['SecretAccessKey'],
+            aws_session_token = credentials['SessionToken'])
+
+    stack_id_and_outputs = {}
+    for s_id in stack_ids:
+        outputs = get_outputs_from_stack_id(cfn, s_id)
+        stack_id_and_outputs[s_id] = outputs
+
     write_all_text("some-path", "some-content")
 
 

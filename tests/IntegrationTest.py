@@ -13,10 +13,10 @@ class MockCfn:
             name = file_name[len("DescribeStack_"):(len(file_name) - len(".json"))]
             self.calls[name] = json.loads(cf.read_all_text(join(directory_path, file_name)))
     
-    def describe_stacks(self, stack_id):
-        if not stack_id in self.calls:
+    def describe_stacks(self, StackName):
+        if not StackName in self.calls:
             raise Exception("Doesnt exist")
-        return self.calls[stack_id]
+        return self.calls[StackName]
 
 class MockKms:
     def __init__(self, directory_path):
