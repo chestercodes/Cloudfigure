@@ -16,7 +16,8 @@ def read_all_text(path):
     return data
 
 def write_all_text(path, content):
-    pass
+    with open(path, "w") as text_file:
+        text_file.write(content)
 
 class ValueToFile:
     def __init__(self, name, path):
