@@ -24,9 +24,10 @@ class MockKms:
         self.calls = json.loads(kms_calls_text)
     
     def decrypt(self, CiphertextBlob):
-        if not CiphertextBlob in self.calls:
+        blob = CiphertextBlob.decode("utf-8")
+        if not blob in self.calls:
             raise Exception("Doesnt exist")
-        return self.calls[CiphertextBlob]
+        return self.calls[blob]
 
 class MockBoto:
     def __init__(self, kms, cfn):
@@ -71,7 +72,7 @@ class IntegrationTest(unittest.TestCase):
     def assert_expected_files(self):
         for expected_write in self.expected_files.keys():
             if expected_write not in self.writes:
-                self.assertFalse(True, "file was written to which was not expected " - expected_write)
+                self.assertFalse(True, "file was written to which was not expected " + expected_write)
             actual = self.writes[expected_write]
             expected = self.expected_files[expected_write]
             self.assertEqual(actual, expected)

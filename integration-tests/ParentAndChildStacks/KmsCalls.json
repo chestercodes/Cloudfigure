@@ -1,4 +1,4 @@
 {
-    "SomePasswordValueEncrypted": "SomePasswordValuePlain",
-    "SomeChildPasswordValueEncrypted": "SomeChildPasswordValuePlain"
+    "SomePasswordValueEncrypted": {"Plaintext": "SomePasswordValuePlain"},
+    "SomeChildPasswordValueEncrypted": {"Plaintext": "SomeChildPasswordValuePlain"}
 }

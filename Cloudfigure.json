@@ -1,4 +1,4 @@
-﻿{
+{
     "Configuration": [      
             {"Name": "SomeAddress", "Location": "SomeEndpoint"},
             {"Name": "SomePassword", "Location": "SomeOutputName", "Unencrypt": true},

@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 import json
+import base64
 
 is_running_as_script = __name__ == "__main__"
 
@@ -17,20 +18,49 @@ def read_all_text(path):
 def write_all_text(path, content):
     pass
 
+class ValueToFile:
+    def __init__(self, name, path):
+        self.name = name
+        self.path = path
+
 class ConfigValue:
     def __init__(self, name, location, unencrypt):
         self.name = name
         self.location = location
         self.unencrypt = unencrypt
 
+        if len(self.location.split('.')) > 2:
+            print("Error with config location - " + location)
+            print("Error - sorry, we can only handle child parent relations, no grand kids allowed.")
+            sys.exit(1)
+
+    def is_not_in_parent(self):
+        return len(self.location.split('.')) > 1
+
+    def child_location_or_none(self):
+        if not self.is_not_in_parent():
+            return None
+        return self.location.split('.')[0]
+    def location_in_stack(self):
+        if not self.is_not_in_parent():
+            return self.location
+        return self.location.split('.')[1]
+
+
 class CloudfigureFile:
     def __init__(self):
         self.configuration = []
         self.substitute_into = []
+        self.value_to_file = []
     def add_config_value(self, config_value):
         self.configuration.append(config_value)
     def add_substitute_into(self, substitute_into):
         self.substitute_into.append(substitute_into)
+    def add_value_to_file(self, value_to_file):
+        self.value_to_file.append(value_to_file)
+
+    def output_values(self, cloudfigure_values):
+        pass
 
 def parse_cloudfigure_file(config_json):
     try:
@@ -53,8 +83,20 @@ def parse_cloudfigure_file(config_json):
             config_val = ConfigValue(name, location, unencrypt)
             config.add_config_value(config_val)
 
-        for substitute_into in json_obj['SubstituteInto']:
-            config.add_substitute_into(substitute_into)
+        if 'SubstituteInto' in json_obj:
+            for substitute_into in json_obj['SubstituteInto']:
+                config.add_substitute_into(substitute_into)
+
+        if 'ValueToFile' in json_obj:
+            for value_to_file_obj in json_obj['ValueToFile']:
+                if "Name" not in value_to_file_obj:
+                    print("Error - Config not valid, missing Name property")
+                    return (False, None)
+                if "Path" not in value_to_file_obj:
+                    print("Error - Config not valid, missing Path property")
+                    return (False, None)
+                value_to_file = ValueToFile(value_to_file_obj["Name"], value_to_file_obj["Path"])
+                config.add_value_to_file(value_to_file)
 
         return (True, config)
     except ValueError:
@@ -64,10 +106,25 @@ def parse_cloudfigure_file(config_json):
 def get_outputs_from_stack_id(cfn, stack_id):
     response = cfn.describe_stacks(StackName=stack_id)
     stack = response["Stacks"][0]
-    pause = 0
+    outputs = {}
+    for output in stack["Outputs"]:
+        outputs[output["OutputKey"]] = output["OutputValue"]
+    return outputs
+
+def unencrypt(kms, val):
+    decoded = base64.b64decode(val)
+    decrypted = kms.decrypt(CiphertextBlob=decoded)
+    plaintext = decrypted['Plaintext']
+    return plaintext
 
 def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
+
+    (parse_successful, cloudfigure_file) = parse_cloudfigure_file(cloudfigure_config)
+    if parse_successful is False:
+        print("Error - cloudfigure file is not parseable")
+        sys.exit(1)
+
     sts_role_or_none = None
     if assume_role is not None:
         if verbose: print("Try to assume role - " + assume_role)
@@ -100,7 +157,59 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbo
         outputs = get_outputs_from_stack_id(cfn, s_id)
         stack_id_and_outputs[s_id] = outputs
 
-    write_all_text("some-path", "some-content")
+    child_logical_id_to_stack_id = {}
+
+    # complete the stacks info retrieval
+    for config_value in cloudfigure_file.configuration:
+        if config_value.is_not_in_parent():
+            config_value_is_in_a_parent_stack = False
+            child_stack_logical_id = config_value.child_location_or_none()
+            for parent_stack in stack_ids:
+                parent_stacks_values = stack_id_and_outputs[parent_stack]
+                if child_stack_logical_id in parent_stacks_values:
+                    config_value_is_in_a_parent_stack = True
+                    child_stack_id = parent_stacks_values[child_stack_logical_id]
+            if config_value_is_in_a_parent_stack is False:
+                print("Error - could not find child logical id in any of the stacks" + child_stack_logical_id)
+                sys.exit(1)
+
+            stack_id_and_outputs[child_stack_id] = get_outputs_from_stack_id(cfn, child_stack_id)
+            child_logical_id_to_stack_id[child_stack_logical_id] = child_stack_id
+
+    cloudfigure_values = {}
+
+    # get values from stack
+    for config_value in cloudfigure_file.configuration:
+        if config_value.is_not_in_parent():
+            child_stack_logical_id = config_value.child_location_or_none()
+            child_stack_id = child_logical_id_to_stack_id[child_stack_logical_id]
+            child_stack_values = stack_id_and_outputs[child_stack_id]
+            location = config_value.location_in_stack()
+            if location in child_stack_values:
+                child_stack_location_value = child_stack_values[location]
+                if config_value.unencrypt:
+                    child_stack_location_value = unencrypt(kms, child_stack_location_value)
+                cloudfigure_values[config_value.name] = child_stack_location_value
+            else:
+                print("Error - Location is not in child stack Location - " + config_value.location + " Stack - " + child_stack_id)
+                sys.exit(1)
+        else:
+            is_in_parent_stack = False
+            for parent_stack in stack_ids:
+                stack_values = stack_id_and_outputs[parent_stack]
+                if config_value.location in stack_values:
+                    is_in_parent_stack = True
+                    location_value = stack_values[config_value.location]
+                    if config_value.unencrypt:
+                        location_value = unencrypt(kms, location_value)
+                    cloudfigure_values[config_value.name] = location_value
+            if is_in_parent_stack is False:
+                print("Error - cant find location in stack(s)" + config_value.location)
+
+    cloudfigure_file.output_values(cloudfigure_values)
+    print("Finished cloudfigure")
+
+
 
 
 def run_cloudfigure_script(boto, args):

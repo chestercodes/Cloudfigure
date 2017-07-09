@@ -11,6 +11,9 @@ class JsonParsingTests(unittest.TestCase):
     ],
     "SubstituteInto": [
         "./SomePath.txt"
+    ],
+    "ValueToFile": [
+      {"Name": "SomeAddress", "Path": "./SomeValue.txt"}
     ]
 }"""
 
@@ -29,6 +32,10 @@ class JsonParsingTests(unittest.TestCase):
 
         self.assertEqual(len(config.substitute_into), 1)
         self.assertEqual(config.substitute_into[0], "./SomePath.txt")
+
+        self.assertEqual(len(config.value_to_file), 1)
+        self.assertEqual(config.value_to_file[0].name, "SomeAddress")
+        self.assertEqual(config.value_to_file[0].path, "./SomeValue.txt")
 
     def test_that_junk_json_doesnt_throw_and_returns_false_and_None(self):
         config = """dfiwu9e7b3rc08n8b9sc__+$F£9"""
