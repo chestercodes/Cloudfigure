@@ -59,8 +59,32 @@ class CloudfigureFile:
     def add_value_to_file(self, value_to_file):
         self.value_to_file.append(value_to_file)
 
-    def output_values(self, cloudfigure_values):
-        pass
+    def output_values(self, cloudfigure_values, working_dir):
+        for substitute_into_file in self.substitute_into:
+            if os.path.isabs(substitute_into_file):
+                path = substitute_into_file
+            else:
+                path = os.path.join(working_dir, substitute_into_file)
+                path = os.path.realpath(path)
+            if os.path.exists(path) is False:
+                print("Error - fila doesnt exist at - " + path)
+                sys.exit(1)
+            file_contents = read_all_text(path)
+            for value_key in cloudfigure_values.keys():
+                value = cloudfigure_values[value_key]
+                placeholder = "#{" + value_key + "}"
+                file_contents = file_contents.replace(placeholder, value)
+            write_all_text(path, file_contents)
+
+        for value_into_file in self.value_to_file:
+            if os.path.isabs(value_into_file.path):
+                path = value_into_file.path
+            else:
+                path = os.path.join(working_dir, value_into_file.path)
+                path = os.path.realpath(path)
+            value = cloudfigure_values[value_into_file.name]
+            write_all_text(path, value)
+
 
 def parse_cloudfigure_file(config_json):
     try:
@@ -117,7 +141,7 @@ def unencrypt(kms, val):
     plaintext = decrypted['Plaintext']
     return plaintext
 
-def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbose=False):
+def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
 
     (parse_successful, cloudfigure_file) = parse_cloudfigure_file(cloudfigure_config)
@@ -206,7 +230,7 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, assume_role=None, verbo
             if is_in_parent_stack is False:
                 print("Error - cant find location in stack(s)" + config_value.location)
 
-    cloudfigure_file.output_values(cloudfigure_values)
+    cloudfigure_file.output_values(cloudfigure_values, working_dir)
     print("Finished cloudfigure")
 
 
@@ -236,6 +260,7 @@ def run_cloudfigure_script(boto, args):
             print("stack ids file is located at: " + args.stack_ids_in_file)
             if file_exists(args.stack_ids_in_file):
                 if verb: print("file exists.")
+                stack_ids = json.load(args.stack_ids_in_file)
             else:
                 print("Error - file doesn't exist")
                 sys.exit(1)
@@ -245,7 +270,7 @@ def run_cloudfigure_script(boto, args):
         for stack_id in args.stack_ids:
             if verb: print(" - " + stack_id)
 
-    run_cloudfigure(boto, cloudfigure_config, stack_ids, args.assume_role, args.verbose)
+    run_cloudfigure(boto, cloudfigure_config, stack_ids, args.working_dir, args.assume_role, args.verbose)
 
 if is_running_as_script:
     # don't want to run if importing as module
@@ -258,5 +283,7 @@ if is_running_as_script:
     PARSER.add_argument('--stack_ids_in_file', nargs='?',
                         help='StackId(s) as a json array, in text file at specified location.')
     PARSER.add_argument('--verbose', '-v', action='store_true', help='log more stuff')
+    PARSER.add_argument('--working_dir', nargs='?', default=".")
+
 
     run_cloudfigure_script(boto3, PARSER.parse_args())

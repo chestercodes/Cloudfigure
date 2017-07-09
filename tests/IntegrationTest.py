@@ -43,6 +43,7 @@ class MockBoto:
 
 class IntegrationTest(unittest.TestCase):
     def __init__(self, directory_path):
+        self.working_dir = directory_path
         self.cfn = MockCfn(directory_path)
         self.kms = MockKms(directory_path)
         stack_ids_text = cf.read_all_text(os.path.join(directory_path, "StackIds.json"))
@@ -56,17 +57,19 @@ class IntegrationTest(unittest.TestCase):
         for file_name in expected_files_in_dir:
             name = file_name[len("ExpectedFile_"):]
             path = join(directory_path, name)
-            expected_files[path] = cf.read_all_text(join(directory_path, name))
+            expected_files[path] = cf.read_all_text(join(directory_path, file_name))
         self.expected_files = expected_files
 
         self.writes = {}
         cf.write_all_text = self.mock_write_all_text
 
+        super().__init__()
+
     def mock_write_all_text(self, path, content):
         self.writes[path] = content
 
     def run(self):
-        self.result = cf.run_cloudfigure(MockBoto(self.kms, self.cfn), self.cloudfigure_config, self.stack_ids)
+        self.result = cf.run_cloudfigure(MockBoto(self.kms, self.cfn), self.cloudfigure_config, self.stack_ids, self.working_dir)
         return self.result
 
     def assert_expected_files(self):
