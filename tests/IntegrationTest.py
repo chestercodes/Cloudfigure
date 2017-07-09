@@ -22,6 +22,10 @@ class MockKms:
     def __init__(self, directory_path):
         kms_calls_text = cf.read_all_text(os.path.join(directory_path, "KmsCalls.json"))
         self.calls = json.loads(kms_calls_text)
+        for call_key in self.calls.keys():
+            to_change = self.calls[call_key]["Plaintext"]
+            self.calls[call_key]["Plaintext"] = to_change.encode("utf-8")
+
     
     def decrypt(self, CiphertextBlob):
         blob = CiphertextBlob.decode("utf-8")

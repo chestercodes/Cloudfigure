@@ -138,7 +138,8 @@ def get_outputs_from_stack_id(cfn, stack_id):
 def unencrypt(kms, val):
     decoded = base64.b64decode(val)
     decrypted = kms.decrypt(CiphertextBlob=decoded)
-    plaintext = decrypted['Plaintext']
+    plaintext_bytes = decrypted['Plaintext']
+    plaintext = plaintext_bytes.decode("utf-8")
     return plaintext
 
 def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, assume_role=None, verbose=False):
