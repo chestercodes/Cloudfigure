@@ -12,7 +12,7 @@ def file_exists(path):
 
 def read_all_text(path):
     with open(path, 'r') as myfile:
-        data = myfile.read().replace('\n', '')
+        data = myfile.read()
     return data
 
 def write_all_text(path, content):
@@ -234,6 +234,7 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, assume_rol
 
     cloudfigure_file.output_values(cloudfigure_values, working_dir)
     print("Finished cloudfigure")
+    return cloudfigure_values
 
 
 

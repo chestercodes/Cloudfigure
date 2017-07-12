@@ -30,6 +30,9 @@ Example of Cloudfigure.json:
     ],
     'SubstituteInto': [
         './SomePath.txt'
+    ],
+    "ValueToFile": [
+      {"Name": "SomeAddress", "Path": "./SomeValue.txt"}
     ]
 } 
 ```
