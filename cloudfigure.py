@@ -132,6 +132,8 @@ def get_outputs_from_stack_id(cfn, stack_id):
     response = cfn.describe_stacks(StackName=stack_id)
     stack = response["Stacks"][0]
     outputs = {}
+    if "Outputs" not in stack:
+        return outputs
     for output in stack["Outputs"]:
         outputs[output["OutputKey"]] = output["OutputValue"]
     return outputs
@@ -143,7 +145,7 @@ def unencrypt(kms, val):
     plaintext = plaintext_bytes.decode("utf-8")
     return plaintext
 
-def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, assume_role=None, verbose=False):
+def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, region_name, assume_role=None, verbose=False):
     print("Running Cloudfigure.")
 
     (parse_successful, cloudfigure_file) = parse_cloudfigure_file(cloudfigure_config)
@@ -165,8 +167,8 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, assume_rol
         print("Assumed role")
 
     if sts_role_or_none is None:
-        kms = boto.client('kms')
-        cfn = boto.client('cloudformation')
+        kms = boto.client('kms', region_name=region_name)
+        cfn = boto.client('cloudformation', region_name=region_name)
     else:
         credentials = sts_role_or_none['Credentials']
         kms = boto.client('kms',
@@ -246,12 +248,18 @@ def run_cloudfigure_script(boto, args):
     else:
         if verb: print("Dont assume role")
 
-    if verb: print("Cloudfigure file is located at: " + args.cloudfigure_file)
-    if file_exists(args.cloudfigure_file):
-        if verb: print("file exists.")
-        cloudfigure_config = read_all_text(args.cloudfigure_file)
+    if os.path.isabs(args.cloudfigure_file):
+        path = args.cloudfigure_file
     else:
-        print("Error - file doesn't exist at " + args.cloudfigure_file)
+        path = os.path.join(args.working_dir, args.cloudfigure_file)
+
+    if verb: print("Cloudfigure file is located at: " + path)
+
+    if file_exists(path):
+        if verb: print("file exists.")
+        cloudfigure_config = read_all_text(path)
+    else:
+        print("Error - file doesn't exist at " + path)
         sys.exit(1)
 
     if len(args.stack_ids) < 1:
@@ -273,20 +281,21 @@ def run_cloudfigure_script(boto, args):
         for stack_id in args.stack_ids:
             if verb: print(" - " + stack_id)
 
-    run_cloudfigure(boto, cloudfigure_config, stack_ids, args.working_dir, args.assume_role, args.verbose)
+    run_cloudfigure(boto, cloudfigure_config, stack_ids, args.working_dir, args.region_name, args.assume_role, args.verbose)
 
 if is_running_as_script:
     # don't want to run if importing as module
     PARSER = argparse.ArgumentParser(description='arguments for cloudfigure')
     PARSER.add_argument('--assume_role', nargs='?',
                         help='Optionally assume IAM role to get config, enter full aws arn.')
-    PARSER.add_argument('--cloudfigure_file', nargs='?', default='./Cloudfigure.json',
-                        help='Specify cloudfigure file, defaults to ./Cloudfigure.json')
+    PARSER.add_argument('--cloudfigure_file', nargs='?', default='Cloudfigure.json',
+                        help='Specify cloudfigure file, defaults to Cloudfigure.json')
     PARSER.add_argument('--stack_ids', nargs='+', default=[], help='StackId(s) of initial stack')
     PARSER.add_argument('--stack_ids_in_file', nargs='?',
                         help='StackId(s) as a json array, in text file at specified location.')
     PARSER.add_argument('--verbose', '-v', action='store_true', help='log more stuff')
     PARSER.add_argument('--working_dir', nargs='?', default=".")
+    PARSER.add_argument('--region_name', nargs='?', default="eu-west-1")
 
 
     run_cloudfigure_script(boto3, PARSER.parse_args())
