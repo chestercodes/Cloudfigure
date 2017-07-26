@@ -174,11 +174,13 @@ def run_cloudfigure(boto, cloudfigure_config, stack_ids, working_dir, region_nam
         kms = boto.client('kms',
             aws_access_key_id = credentials['AccessKeyId'],
             aws_secret_access_key = credentials['SecretAccessKey'],
-            aws_session_token = credentials['SessionToken'])
+            aws_session_token = credentials['SessionToken'], 
+            region_name=region_name)
         cfn = boto.client('cloudformation',
             aws_access_key_id = credentials['AccessKeyId'],
             aws_secret_access_key = credentials['SecretAccessKey'],
-            aws_session_token = credentials['SessionToken'])
+            aws_session_token = credentials['SessionToken'], 
+            region_name=region_name)
 
     stack_id_and_outputs = {}
     for s_id in stack_ids:
